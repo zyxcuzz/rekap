@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Closing Penjualan Harian</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased font-sans min-h-screen pb-12">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-calculator text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-none">Closing Penjualan</h1>
+                    <p class="text-xs text-slate-500 mt-1 font-medium" id="currentDateTime">Memuat waktu...</p>
+                </div>
+            </div>
+            <button onclick="openResetModal()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 border border-rose-200">
+                <i class="fa-solid fa-rotate-left"></i>
+                <span class="hidden sm:inline">Reset Data</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- DASHBOARD SUMMARY CARDS -->
+        <section class="space-y-2">
+            <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider px-1">Ringkasan Penjualan</h2>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+                
+                <!-- CARD 1: MODAL AWAL -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Modal Awal</span>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-vault text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-lg sm:text-2xl font-extrabold text-slate-800 tracking-tight" id="dashModalAwal">Rp0</p>
+                        <button onclick="focusModalAwalInput()" class="mt-1 text-[11px] text-indigo-600 hover:underline font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-pen-to-square"></i> Ubah Modal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CARD 2: TOTAL CUP -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cup Terpakai</span>
+                        <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <i class="fa-solid fa-mug-hot text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-lg sm:text-2xl font-extrabold text-slate-800 tracking-tight" id="dashTotalCup">0 CUP</p>
+                        <p class="mt-1 text-[11px] text-slate-500 font-medium">
+                            Awal: <span id="dashCupAwal">0 CUP</span> | 
+                            Gratis: <span id="dashCupGratis" class="font-bold text-amber-600">0 CUP</span> | 
+                            Sisa: <span id="dashSisaCup" class="font-bold text-slate-700">0 CUP</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- CARD 3: CASH -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Cash</span>
+                        <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <i class="fa-solid fa-money-bill-wave text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-lg sm:text-2xl font-extrabold text-emerald-600 tracking-tight" id="dashTotalCash">Rp0</p>
+                        <p class="mt-1 text-[11px] text-slate-400 font-medium">Uang Tunai</p>
+                    </div>
+                </div>
+
+                <!-- CARD 4: QR -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total QR</span>
+                        <div class="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                            <i class="fa-solid fa-qrcode text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-lg sm:text-2xl font-extrabold text-sky-600 tracking-tight" id="dashTotalQR">Rp0</p>
+                        <p class="mt-1 text-[11px] text-slate-400 font-medium">Nontunai / QRIS</p>
+                    </div>
+                </div>
+
+                <!-- CARD 5: TOTAL PENJUALAN -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition col-span-2 sm:col-span-1">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Penjualan</span>
+                        <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="mt-1">
+                        <p class="text-lg sm:text-2xl font-extrabold text-indigo-600 tracking-tight" id="dashTotalPenjualan">Rp0</p>
+                        <p class="mt-1 text-[11px] text-slate-400 font-medium">Cash + QR</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- INPUT MODAL AWAL, CUP AWAL, & CUP TERJUAL MANUAL -->
+        <section class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Modal Awal -->
+                <div class="flex flex-col justify-between gap-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-white text-slate-700 rounded-lg shadow-sm">
+                            <i class="fa-solid fa-vault text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <label for="inputModalAwal" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Modal Awal Laci</label>
+                            <span class="text-[11px] text-slate-500">Uang tunai awal shift</span>
+                        </div>
+                    </div>
+                    <div class="relative mt-1">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 font-semibold text-xs">Rp</span>
+                        <input type="text" id="inputModalAwal" placeholder="0" class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 font-bold text-sm transition" oninput="handleModalAwalInput(this)" value="500.000">
+                    </div>
+                </div>
+
+                <!-- Cup Awal -->
+                <div class="flex flex-col justify-between gap-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 bg-white text-slate-700 rounded-lg shadow-sm">
+                            <i class="fa-solid fa-boxes-stacked text-amber-600"></i>
+                        </div>
+                        <div>
+                            <label for="inputCupAwal" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Stok Cup Awal</label>
+                            <span class="text-[11px] text-slate-500">Jumlah cup fisik awal</span>
+                        </div>
+                    </div>
+                    <div class="relative mt-1">
+                        <input type="number" id="inputCupAwal" min="0" placeholder="0" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 font-bold text-sm transition" oninput="handleCupAwalInput(this)" value="80">
+                    </div>
+                </div>
+
+                <!-- Cup Terjual (Manual / Auto Input) -->
+                <div class="flex flex-col justify-between gap-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="p-2 bg-white text-slate-700 rounded-lg shadow-sm">
+                                <i class="fa-solid fa-mug-hot text-orange-600"></i>
+                            </div>
+                            <div>
+                                <label for="inputCupTerjual" class="block text-xs font-bold text-slate-700 uppercase tracking-wide">Cup Terjual</label>
+                                <span class="text-[11px] text-slate-500" id="labelModeCupTerjual">Auto dari transaksi</span>
+                            </div>
+                        </div>
+                        <button type="button" onclick="resetCupTerjualAuto()" id="btnResetCupAuto" class="hidden text-[10px] bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-2 py-1 rounded font-semibold transition">
+                            <i class="fa-solid fa-rotate-left"></i> Auto
+                        </button>
+                    </div>
+                    <div class="relative mt-1">
+                        <input type="number" id="inputCupTerjual" min="0" placeholder="Auto dari transaksi" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 font-bold text-sm transition" oninput="handleCupTerjualManualInput(this)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- INPUT PRODUK & TABEL PENJUALAN GRID -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- LEFT FORM: INPUT PRODUK MANUAL -->
+            <div class="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-cart-plus text-indigo-600"></i>
+                        <span>Input Penjualan Produk</span>
+                    </h2>
+                    <span class="text-xs bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-semibold">Manual</span>
+                </div>
+
+                <form id="formProduk" onsubmit="handleTambahProduk(event)" class="space-y-3.5">
+                    <!-- Nama Produk -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Produk</label>
+                        <input type="text" id="inputNamaProduk" required placeholder="Contoh: Kopi Susu, Matcha..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm transition">
+                    </div>
+
+                    <!-- Harga & Cup Grid -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Harga Satuan (Rp)</label>
+                            <input type="text" id="inputHargaProduk" required placeholder="10.000" oninput="formatInputRupiah(this)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm font-semibold text-slate-800 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Cup</label>
+                            <input type="number" id="inputJumlahCup" min="0" value="1" required placeholder="1" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:bg-white text-sm font-semibold text-slate-800 transition">
+                        </div>
+                    </div>
+
+                    <!-- Metode Pembayaran -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembayaran</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="relative flex items-center justify-center p-2.5 rounded-xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-slate-100 transition has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-500 has-[:checked]:text-emerald-700">
+                                <input type="radio" name="metodeBayar" value="CASH" checked class="sr-only">
+                                <span class="text-xs font-bold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-money-bill-wave"></i> CASH
+                                </span>
+                            </label>
+                            <label class="relative flex items-center justify-center p-2.5 rounded-xl border border-slate-200 cursor-pointer bg-slate-50 hover:bg-slate-100 transition has-[:checked]:bg-sky-50 has-[:checked]:border-sky-500 has-[:checked]:text-sky-700">
+                                <input type="radio" name="metodeBayar" value="QR" class="sr-only">
+                                <span class="text-xs font-bold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-qrcode"></i> QR
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Preview Subtotal -->
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between text-xs">
+                        <span class="text-slate-500 font-medium">Subtotal Terhitung:</span>
+                        <span class="font-bold text-slate-800 text-sm" id="previewSubtotal">Rp0</span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-200 hover:shadow-lg transition flex items-center justify-center gap-2 text-sm active:scale-[0.99]">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah Transaksi</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- RIGHT TABLE: TABEL PENJUALAN -->
+            <div class="lg:col-span-8 bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-indigo-600"></i>
+                            <span>Daftar Transaksi Penjualan</span>
+                        </h2>
+                        <p class="text-xs text-slate-500">Rincian produk yang telah diinput</p>
+                    </div>
+                    <span id="badgeTotalItem" class="text-xs font-semibold bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">0 Produk</span>
+                </div>
+
+                <!-- Table Container -->
+                <div class="overflow-x-auto rounded-xl border border-slate-200">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-3.5 text-center w-12">No</th>
+                                <th class="py-3 px-3.5">Produk</th>
+                                <th class="py-3 px-3.5 text-right">Harga</th>
+                                <th class="py-3 px-3.5 text-center">Cup</th>
+                                <th class="py-3 px-3.5 text-center">Bayar</th>
+                                <th class="py-3 px-3.5 text-right">Total</th>
+                                <th class="py-3 px-3.5 text-center w-24">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelProdukBody" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- Rows loaded dynamically -->
+                        </tbody>
+                    </table>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="py-12 text-center text-slate-400 space-y-2">
+                        <i class="fa-solid fa-receipt text-4xl text-slate-300"></i>
+                        <p class="text-sm font-medium">Belum ada transaksi dimasukkan hari ini.</p>
+                        <p class="text-xs text-slate-400">Gunakan form di sebelah kiri untuk menambah penjualan.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SECTION: PENGAMBILAN TANPA BAYAR (GRATIS / INTERNAL) -->
+        <section class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-gift text-amber-500"></i>
+                        <span>Pengambilan Tanpa Bayar (Gratis / Internal / Kasbon)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Mencatat produk yang diambil tanpa pembayaran (mengurangi stok cup)</p>
+                </div>
+                <span id="badgeTotalGratis" class="text-xs font-semibold bg-amber-50 text-amber-700 px-2.5 py-1 rounded-full">0 Cup</span>
+            </div>
+
+            <form id="formGratis" onsubmit="handleTambahGratis(event)" class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-amber-50/50 p-3.5 rounded-xl border border-amber-100">
+                <div class="md:col-span-7">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Keterangan Pengambilan</label>
+                    <input type="text" id="inputKetGratis" required placeholder="Contoh: Ibu Iva Es Teh" class="w-full px-3.5 py-2 bg-white border border-amber-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Cup</label>
+                    <input type="number" id="inputCupGratis" min="1" value="1" required placeholder="1" class="w-full px-3.5 py-2 bg-white border border-amber-200 rounded-lg text-xs font-bold text-slate-800 focus:ring-2 focus:ring-amber-500">
+                </div>
+                <div class="md:col-span-2">
+                    <button type="submit" class="w-full py-2 px-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah</span>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Tabel Daftar Gratis -->
+            <div class="overflow-x-auto rounded-xl border border-slate-200">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead>
+                        <tr class="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-2.5 px-3.5 text-center w-12">No</th>
+                            <th class="py-2.5 px-3.5">Keterangan</th>
+                            <th class="py-2.5 px-3.5 text-center">Cup</th>
+                            <th class="py-2.5 px-3.5 text-center w-20">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelGratisBody" class="divide-y divide-slate-100 text-slate-700 font-medium">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+                <div id="emptyGratisState" class="py-6 text-center text-slate-400 space-y-1">
+                    <p class="text-xs italic">Belum ada catatan pengambilan tanpa bayar hari ini.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 7 & 8: PERHITUNGAN UANG CASH & CLOSING -->
+        <section class="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-6">
+            <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-cash-register text-indigo-600"></i>
+                        <span>Pemeriksaan Uang Cash & Closing</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Kalkulasi kesesuaian fisik uang tunai di laci</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- CASH SEHARUSNYA CARD -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Cash Seharusnya (Laci)</span>
+                    <p class="text-2xl font-extrabold text-slate-800 tracking-tight" id="calcCashSeharusnya">Rp0</p>
+                    <p class="text-[11px] text-slate-500">Rumus: Modal Awal (Rp<span id="labelModalCalc">0</span>) + Cash Penjualan (Rp<span id="labelCashCalc">0</span>)</p>
+                </div>
+
+                <!-- CASH AKTUAL INPUT CARD -->
+                <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 space-y-2">
+                    <label for="inputCashAktual" class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">Input Uang Cash Aktual</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-indigo-500 font-bold text-sm">Rp</span>
+                        <input type="text" id="inputCashAktual" placeholder="0" oninput="handleCashAktualInput(this)" class="w-full pl-10 pr-3 py-2.5 bg-white border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-900 font-extrabold text-lg transition">
+                    </div>
+                    <p class="text-[11px] text-indigo-600 font-medium">Hitung seluruh fisik uang kertas/koin di laci</p>
+                </div>
+
+                <!-- STATUS SELISIH CARD -->
+                <div id="cardStatusSelisih" class="bg-slate-100 p-4 rounded-xl border border-slate-200 space-y-1 flex flex-col justify-center transition-all">
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Selisih & Status</span>
+                    <p class="text-2xl font-extrabold text-slate-800 tracking-tight" id="calcSelisih">Rp0</p>
+                    <div class="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg w-max" id="badgeStatusClosing">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span>CLOSING SESUAI</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TOMBOL LOCK CLOSING -->
+            <div class="pt-2">
+                <button onclick="prosesTutupClosing()" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-base rounded-2xl shadow-xl hover:shadow-2xl transition flex items-center justify-center gap-2.5 active:scale-[0.99] group">
+                    <i class="fa-solid fa-lock text-amber-400 group-hover:rotate-12 transition-transform"></i>
+                    <span>TUTUP CLOSING</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL EDIT PRODUK -->
+    <div id="modalEdit" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-600"></i>
+                    <span>Edit Transaksi Produk</span>
+                </h3>
+                <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <input type="hidden" id="editIndex">
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Produk</label>
+                    <input type="text" id="editNamaProduk" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Harga Satuan (Rp)</label>
+                        <input type="text" id="editHargaProduk" oninput="formatInputRupiah(this)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Cup</label>
+                        <input type="number" id="editJumlahCup" min="0" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Metode Pembayaran</label>
+                    <select id="editMetodeBayar" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm font-semibold">
+                        <option value="CASH">CASH (Uang Tunai)</option>
+                        <option value="QR">QR (Nontunai / QRIS)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeEditModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">Batal</button>
+                <button type="button" onclick="saveEditProduk()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl transition shadow-md shadow-indigo-200">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CONFIRMATION RESET -->
+    <div id="modalReset" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden no-print">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 text-center">
+            <div class="w-12 h-12 bg-rose-100 text-rose-600 rounded-2xl mx-auto flex items-center justify-center text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 class="text-base font-bold text-slate-800">Reset Semua Data Closing?</h3>
+                <p class="text-xs text-slate-500 mt-1">Apakah Anda yakin ingin menghapus semua data closing? Seluruh daftar penjualan dan modal akan dikosongkan.</p>
+            </div>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" onclick="closeResetModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">BATAL</button>
+                <button type="button" onclick="executeResetClosing()" class="w-1/2 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition shadow-md shadow-rose-200">RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RINGKASAN CLOSING / RESULT -->
+    <div id="modalClosing" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden no-print overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 my-8">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-file-invoice text-indigo-600 text-lg"></i>
+                    <h3 class="text-base font-bold text-slate-800">Ringkasan Closing Penjualan</h3>
+                </div>
+                <button onclick="closeClosingModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- TAMPILAN RESI -->
+            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200/70 font-mono text-xs space-y-2 text-slate-800">
+                <div class="text-center pb-2 border-b border-dashed border-slate-300">
+                    <p class="font-extrabold text-sm uppercase text-slate-900 tracking-wider">CLOSING PENJUALAN</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5" id="ringkasanTanggal">Tanggal: -</p>
+                </div>
+
+                <div class="space-y-1 py-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">MODAL AWAL</span>
+                        <span class="font-bold" id="rModalAwal">Rp0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">CUP AWAL</span>
+                        <span class="font-bold" id="rCupAwal">0 CUP</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">CUP TERJUAL</span>
+                        <span class="font-bold text-orange-600" id="rTotalCup">0 CUP</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">CUP GRATIS / NON-BAYAR</span>
+                        <span class="font-bold text-amber-600" id="rCupGratis">0 CUP</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">SISA CUP FISIK</span>
+                        <span class="font-bold text-slate-800" id="rSisaCup">0 CUP</span>
+                    </div>
+                    <div class="flex justify-between pt-1 border-t border-dashed border-slate-300">
+                        <span class="text-slate-500">CASH</span>
+                        <span class="font-bold text-emerald-700" id="rCash">Rp0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">QR</span>
+                        <span class="font-bold text-sky-700" id="rQR">Rp0</span>
+                    </div>
+                    <div class="flex justify-between pt-1 border-t border-dashed border-slate-300 font-bold">
+                        <span>TOTAL PENJUALAN</span>
+                        <span id="rTotalPenjualan">Rp0</span>
+                    </div>
+                </div>
+
+                <div class="space-y-1 pt-2 border-t border-dashed border-slate-300">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">CASH SEHARUSNYA</span>
+                        <span class="font-bold" id="rCashSeharusnya">Rp0</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">CASH AKTUAL</span>
+                        <span class="font-bold" id="rCashAktual">Rp0</span>
+                    </div>
+                    <div class="flex justify-between font-bold">
+                        <span>SELISIH</span>
+                        <span id="rSelisih">Rp0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1 font-bold">
+                        <span>STATUS</span>
+                        <span id="rStatus" class="px-2 py-0.5 rounded text-[10px]">CLOSING SESUAI</span>
+                    </div>
+                </div>
+
+                <div id="rSectionGratisList" class="pt-2 border-t border-dashed border-slate-300 font-sans text-[11px] hidden">
+                    <p class="font-bold text-amber-700 mb-1">Rincian Tanpa Bayar:</p>
+                    <ul id="rGratisListText" class="list-disc pl-4 space-y-0.5 text-slate-600">
+                        <!-- Loaded dynamically -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="grid grid-cols-2 gap-3 pt-1">
+                <button onclick="unduhRekapanTXT()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-100 transition flex items-center justify-center gap-2 text-xs">
+                    <i class="fa-solid fa-download text-sm"></i>
+                    <span>UNDUH REKAPAN (.TXT)</span>
+                </button>
+                <button onclick="triggerCetakClosing()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition flex items-center justify-center gap-2 text-xs">
+                    <i class="fa-solid fa-print text-sm"></i>
+                    <span>CETAK CLOSING</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PRINT LAYOUT ONLY (VISUAL KHUSUS SAAT DICETAK) -->
+    <div id="printArea" class="hidden">
+        <div style="font-family: monospace; max-width: 350px; margin: auto; padding: 10px;">
+            <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 10px;">
+                <h2 style="font-size: 16px; font-weight: bold; margin: 0;">CLOSING PENJUALAN</h2>
+                <p style="font-size: 11px; margin: 4px 0 0 0;" id="printTanggal">Tanggal: -</p>
+                <p style="font-size: 11px; margin: 2px 0 0 0;" id="printJam">Jam: -</p>
+            </div>
+
+            <table style="width: 100%; font-size: 11px; margin-bottom: 10px; border-collapse: collapse;">
+                <tr>
+                    <td>Modal Awal</td>
+                    <td style="text-align: right; font-weight: bold;" id="pModalAwal">Rp0</td>
+                </tr>
+                <tr>
+                    <td>Cup Awal</td>
+                    <td style="text-align: right; font-weight: bold;" id="pCupAwal">0 CUP</td>
+                </tr>
+                <tr>
+                    <td>Cup Terjual</td>
+                    <td style="text-align: right; font-weight: bold;" id="pTotalCup">0 CUP</td>
+                </tr>
+                <tr>
+                    <td>Cup Gratis / Non-Bayar</td>
+                    <td style="text-align: right; font-weight: bold;" id="pCupGratis">0 CUP</td>
+                </tr>
+                <tr>
+                    <td>Sisa Cup Fisik</td>
+                    <td style="text-align: right; font-weight: bold;" id="pSisaCup">0 CUP</td>
+                </tr>
+                <tr>
+                    <td>Cash Penjualan</td>
+                    <td style="text-align: right; font-weight: bold;" id="pCash">Rp0</td>
+                </tr>
+                <tr>
+                    <td>QR Penjualan</td>
+                    <td style="text-align: right; font-weight: bold;" id="pQR">Rp0</td>
+                </tr>
+                <tr style="border-top: 1px dashed #000; font-weight: bold;">
+                    <td style="padding-top: 4px;">Total Penjualan</td>
+                    <td style="text-align: right; padding-top: 4px;" id="pTotalPenjualan">Rp0</td>
+                </tr>
+            </table>
+
+            <div style="border-top: 1px dashed #000; padding-top: 6px; font-size: 11px; margin-bottom: 10px;">
+                <div style="display: flex; justify-between;">
+                    <span>Cash Seharusnya:</span>
+                    <strong id="pCashSeharusnya">Rp0</strong>
+                </div>
+                <div style="display: flex; justify-between; margin-top: 2px;">
+                    <span>Cash Aktual:</span>
+                    <strong id="pCashAktual">Rp0</strong>
+                </div>
+                <div style="display: flex; justify-between; margin-top: 2px;">
+                    <span>Selisih:</span>
+                    <strong id="pSelisih">Rp0</strong>
+                </div>
+                <div style="display: flex; justify-between; margin-top: 2px; font-weight: bold;">
+                    <span>Status Closing:</span>
+                    <span id="pStatus">CLOSING SESUAI</span>
+                </div>
+            </div>
+
+            <div style="border-top: 1px dashed #000; padding-top: 8px; font-size: 11px;">
+                <p style="font-weight: bold; margin: 0 0 5px 0;">Rincian Produk:</p>
+                <table style="width: 100%; font-size: 10px; text-align: left; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid #000;">
+                            <th style="padding: 2px 0;">Produk</th>
+                            <th style="padding: 2px 0; text-align: right;">Harga</th>
+                            <th style="padding: 2px 0; text-align: center;">Cup</th>
+                            <th style="padding: 2px 0; text-align: center;">Bayar</th>
+                            <th style="padding: 2px 0; text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="printTabelBody">
+                        <!-- Dynamic Print Rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="pSectionGratis" style="border-top: 1px dashed #000; padding-top: 8px; margin-top: 8px; font-size: 10px; display: none;">
+                <p style="font-weight: bold; margin: 0 0 4px 0;">Pengambilan Tanpa Bayar:</p>
+                <ul id="printGratisBody" style="margin: 0; padding-left: 15px;">
+                    <!-- Dynamic Print Gratis Rows -->
+                </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 15px; font-size: 10px; border-top: 1px dashed #000; padding-top: 8px;">
+                <p style="margin: 0;">-- Laporan Ditutup --</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // APP STATE
+        let appState = {
+            modalAwal: 500000,
+            cupAwal: 80,
+            cupTerjualManual: null, // null = auto calculate from transactions, number = manual override
+            cashAktual: 0,
+            produkList: [],
+            gratisList: []
+        };
+
+        const STORAGE_KEY = 'CLOSING_PENJUALAN_STORE_V2';
+
+        // FORMATTING & UTILITY FUNCTIONS
+        function formatNumber(num) {
+            const val = parseInt(num, 10);
+            if (isNaN(val)) return '0';
+            return val.toLocaleString('id-ID');
+        }
+
+        function formatRupiah(num) {
+            return 'Rp' + formatNumber(num);
+        }
+
+        function parseRupiah(str) {
+            if (typeof str === 'number') return str;
+            if (!str) return 0;
+            const cleaned = str.toString().replace(/[^0-9]/g, '');
+            return parseInt(cleaned, 10) || 0;
+        }
+
+        function formatInputRupiah(input) {
+            const val = parseRupiah(input.value);
+            input.value = val > 0 ? formatNumber(val) : '';
+        }
+
+        function setElementText(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        function focusModalAwalInput() {
+            const el = document.getElementById('inputModalAwal');
+            if (el) {
+                el.focus();
+                el.select();
+            }
+        }
+
+        function updateSubtotalPreview() {
+            const hargaEl = document.getElementById('inputHargaProduk');
+            const cupEl = document.getElementById('inputJumlahCup');
+            const previewEl = document.getElementById('previewSubtotal');
+            
+            if (hargaEl && cupEl && previewEl) {
+                const harga = parseRupiah(hargaEl.value);
+                const cup = parseInt(cupEl.value, 10) || 0;
+                previewEl.textContent = formatRupiah(harga * cup);
+            }
+        }
+
+        // INITIALIZATION ON LOAD
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Event listener for live calculation preview in form
+            document.getElementById('inputHargaProduk')?.addEventListener('input', updateSubtotalPreview);
+            document.getElementById('inputJumlahCup')?.addEventListener('input', updateSubtotalPreview);
+            
+            render();
+        });
+
+        // REALTIME DATE DISPLAY
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            setElementText('currentDateTime', now.toLocaleDateString('id-ID', options));
+        }
+
+        // LOCALSTORAGE MANAGERS
+        function saveToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error("Gagal menyimpan ke localStorage:", e);
+            }
+        }
+
+        function loadFromStorage() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    appState = JSON.parse(saved);
+                    if (!Array.isArray(appState.produkList)) appState.produkList = [];
+                    if (!Array.isArray(appState.gratisList)) appState.gratisList = [];
+                    if (appState.modalAwal === undefined) appState.modalAwal = 500000;
+                    if (appState.cupAwal === undefined) appState.cupAwal = 80;
+                    if (appState.cupTerjualManual === undefined) appState.cupTerjualManual = null;
+                    if (appState.cashAktual === undefined) appState.cashAktual = 0;
+                }
+            } catch (e) {
+                console.error("Gagal membaca localStorage:", e);
+            }
+
+            // Sync inputs with loaded state
+            const elModal = document.getElementById('inputModalAwal');
+            const elCup = document.getElementById('inputCupAwal');
+            const elCash = document.getElementById('inputCashAktual');
+            
+            if (elModal) elModal.value = formatNumber(appState.modalAwal);
+            if (elCup) elCup.value = appState.cupAwal || 0;
+            if (elCash) elCash.value = appState.cashAktual ? formatNumber(appState.cashAktual) : '';
+            if (appState.cupTerjualManual !== null && appState.cupTerjualManual !== undefined) {
+                const elCupTerjual = document.getElementById('inputCupTerjual');
+                if (elCupTerjual) elCupTerjual.value = appState.cupTerjualManual;
+            }
+        }
+
+        // EVENT HANDLERS FOR INPUTS
+        function handleModalAwalInput(input) {
+            formatInputRupiah(input);
+            appState.modalAwal = parseRupiah(input.value);
+            saveToStorage();
+            render();
+        }
+
+        function handleCupAwalInput(input) {
+            appState.cupAwal = parseInt(input.value, 10) || 0;
+            saveToStorage();
+            render();
+        }
+
+        function handleCupTerjualManualInput(input) {
+            if (input.value === '' || input.value === null) {
+                appState.cupTerjualManual = null;
+            } else {
+                appState.cupTerjualManual = parseInt(input.value, 10) || 0;
+            }
+            saveToStorage();
+            render();
+        }
+
+        function resetCupTerjualAuto() {
+            appState.cupTerjualManual = null;
+            const input = document.getElementById('inputCupTerjual');
+            if (input) input.value = '';
+            saveToStorage();
+            render();
+        }
+
+        function handleCashAktualInput(input) {
+            formatInputRupiah(input);
+            appState.cashAktual = parseRupiah(input.value);
+            saveToStorage();
+            render();
+        }
+
+        // PRODUCT CRUD HANDLERS
+        function handleTambahProduk(event) {
+            event.preventDefault();
+            const nama = document.getElementById('inputNamaProduk')?.value.trim();
+            const harga = parseRupiah(document.getElementById('inputHargaProduk')?.value);
+            const cup = parseInt(document.getElementById('inputJumlahCup')?.value, 10) || 0;
+            
+            const radioMetode = document.querySelector('input[name="metodeBayar"]:checked');
+            const metode = radioMetode ? radioMetode.value : 'CASH';
+
+            if (!nama) return;
+
+            if (!Array.isArray(appState.produkList)) appState.produkList = [];
+
+            appState.produkList.push({
+                id: Date.now(),
+                nama: nama,
+                harga: harga,
+                cup: cup,
+                metode: metode,
+                total: harga * cup
+            });
+
+            saveToStorage();
+
+            // Reset Form
+            document.getElementById('inputNamaProduk').value = '';
+            document.getElementById('inputHargaProduk').value = '';
+            document.getElementById('inputJumlahCup').value = '1';
+            updateSubtotalPreview();
+            document.getElementById('inputNamaProduk').focus();
+
+            render();
+        }
+
+        function hapusProduk(index) {
+            if (appState.produkList && appState.produkList[index]) {
+                appState.produkList.splice(index, 1);
+                saveToStorage();
+                render();
+            }
+        }
+
+        function openEditModal(index) {
+            const item = appState.produkList[index];
+            if (!item) return;
+
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editNamaProduk').value = item.nama;
+            document.getElementById('editHargaProduk').value = formatNumber(item.harga);
+            document.getElementById('editJumlahCup').value = item.cup;
+            document.getElementById('editMetodeBayar').value = item.metode;
+
+            document.getElementById('modalEdit')?.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            document.getElementById('modalEdit')?.classList.add('hidden');
+        }
+
+        function saveEditProduk() {
+            const idx = parseInt(document.getElementById('editIndex')?.value, 10);
+            if (isNaN(idx) || !appState.produkList[idx]) return;
+
+            const nama = document.getElementById('editNamaProduk')?.value.trim();
+            const harga = parseRupiah(document.getElementById('editHargaProduk')?.value);
+            const cup = parseInt(document.getElementById('editJumlahCup')?.value, 10) || 0;
+            const metode = document.getElementById('editMetodeBayar')?.value || 'CASH';
+
+            if (!nama) return;
+
+            appState.produkList[idx] = {
+                ...appState.produkList[idx],
+                nama: nama,
+                harga: harga,
+                cup: cup,
+                metode: metode,
+                total: harga * cup
+            };
+
+            saveToStorage();
+            closeEditModal();
+            render();
+        }
+
+        // ADD PENGAMBILAN TANPA BAYAR
+        function handleTambahGratis(event) {
+            event.preventDefault();
+            const ket = document.getElementById('inputKetGratis')?.value.trim();
+            const cup = parseInt(document.getElementById('inputCupGratis')?.value, 10) || 1;
+
+            if (!ket) return;
+
+            if (!Array.isArray(appState.gratisList)) appState.gratisList = [];
+
+            appState.gratisList.push({
+                id: Date.now(),
+                keterangan: ket,
+                cup: Math.max(1, cup)
+            });
+
+            saveToStorage();
+
+            document.getElementById('inputKetGratis').value = '';
+            document.getElementById('inputCupGratis').value = '1';
+            document.getElementById('inputKetGratis').focus();
+
+            render();
+        }
+
+        function hapusGratis(index) {
+            if (appState.gratisList && appState.gratisList[index]) {
+                appState.gratisList.splice(index, 1);
+                saveToStorage();
+                render();
+            }
+        }
+
+        // UNDUH REKAPAN FILE (.TXT)
+        function unduhRekapanTXT() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('id-ID');
+
+            let totalCupAuto = 0;
+            let totalCash = 0;
+            let totalQR = 0;
+
+            appState.produkList.forEach(item => {
+                totalCupAuto += (item.cup || 0);
+                if (item.metode === 'CASH') totalCash += item.total;
+                if (item.metode === 'QR') totalQR += item.total;
+            });
+
+            const totalCupPenjualan = (appState.cupTerjualManual !== null && appState.cupTerjualManual !== undefined) 
+                ? appState.cupTerjualManual 
+                : totalCupAuto;
+
+            let totalCupGratis = 0;
+            (appState.gratisList || []).forEach(g => {
+                totalCupGratis += (g.cup || 0);
+            });
+
+            const totalCupTerpakai = totalCupPenjualan + totalCupGratis;
+            const cupAwal = appState.cupAwal || 0;
+            const sisaCup = cupAwal - totalCupTerpakai;
+
+            const totalPenjualan = totalCash + totalQR;
+            const cashSeharusnya = appState.modalAwal + totalCash;
+            const selisihCash = appState.cashAktual - cashSeharusnya;
+
+            let statusText = 'CLOSING SESUAI';
+            if (selisihCash < 0) statusText = `CASH KURANG ${formatRupiah(Math.abs(selisihCash))}`;
+            if (selisihCash > 0) statusText = `CASH LEBIH ${formatRupiah(selisihCash)}`;
+
+            let txt = `=================================================\n`;
+            txt += `           LAPORAN CLOSING PENJUALAN\n`;
+            txt += `=================================================\n`;
+            txt += `Tanggal       : ${dateStr}\n`;
+            txt += `Waktu Unduh   : ${timeStr}\n`;
+            txt += `-------------------------------------------------\n`;
+            txt += `RINGKASAN KEUANGAN & STOK CUP:\n`;
+            txt += `Modal Awal           : ${formatRupiah(appState.modalAwal)}\n`;
+            txt += `Stok Cup Awal        : ${formatNumber(cupAwal)} CUP\n`;
+            txt += `Cup Terjual Penjualan: ${formatNumber(totalCupPenjualan)} CUP\n`;
+            txt += `Cup Tanpa Bayar      : ${formatNumber(totalCupGratis)} CUP\n`;
+            txt += `Total Cup Terpakai   : ${formatNumber(totalCupTerpakai)} CUP\n`;
+            txt += `Sisa Cup Fisik       : ${formatNumber(sisaCup)} CUP\n`;
+            txt += `-------------------------------------------------\n`;
+            txt += `Total Cash Penjualan : ${formatRupiah(totalCash)}\n`;
+            txt += `Total QR Penjualan   : ${formatRupiah(totalQR)}\n`;
+            txt += `TOTAL PENJUALAN      : ${formatRupiah(totalPenjualan)}\n`;
+            txt += `-------------------------------------------------\n`;
+            txt += `Cash Seharusnya      : ${formatRupiah(cashSeharusnya)}\n`;
+            txt += `Cash Aktual (Laci)   : ${formatRupiah(appState.cashAktual)}\n`;
+            txt += `Selisih Cash         : ${selisihCash < 0 ? '-' : (selisihCash > 0 ? '+' : '')}${formatRupiah(Math.abs(selisihCash))}\n`;
+            txt += `STATUS CLOSING       : ${statusText}\n`;
+            txt += `=================================================\n\n`;
+
+            txt += `RINCIAN TRANSAKSI PENJUALAN:\n`;
+            if (appState.produkList.length === 0) {
+                txt += `- Tidak ada transaksi penjualan -\n`;
+            } else {
+                appState.produkList.forEach((item, i) => {
+                    txt += `${i + 1}. ${item.nama} | ${formatRupiah(item.harga)} x ${item.cup} Cup | [${item.metode}] = ${formatRupiah(item.total)}\n`;
+                });
+            }
+
+            txt += `\n-------------------------------------------------\n`;
+            txt += `PENGAMBILAN TANPA BAYAR (GRATIS / INTERNAL):\n`;
+            if (!appState.gratisList || appState.gratisList.length === 0) {
+                txt += `- Tidak ada pengambilan tanpa bayar -\n`;
+            } else {
+                appState.gratisList.forEach((g, i) => {
+                    txt += `${i + 1}. ${g.keterangan} (${g.cup} Cup)\n`;
+                });
+            }
+            txt += `=================================================\n`;
+
+            const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            const filenameDate = new Date().toISOString().slice(0, 10);
+            link.download = `Closing_Penjualan_${filenameDate}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // CORE CALCULATIONS AND RENDER ENGINE
+        function render() {
+            // 1. Calculations
+            let totalCupAuto = 0;
+            let totalCash = 0;
+            let totalQR = 0;
+
+            appState.produkList.forEach(item => {
+                totalCupAuto += (item.cup || 0);
+                if (item.metode === 'CASH') {
+                    totalCash += item.total;
+                } else if (item.metode === 'QR') {
+                    totalQR += item.total;
+                }
+            });
+
+            let totalCupGratis = 0;
+            (appState.gratisList || []).forEach(g => {
+                totalCupGratis += (g.cup || 0);
+            });
+
+            // Determine effective total cup sold (Manual override or Auto calculated)
+            const isManualCup = appState.cupTerjualManual !== null && appState.cupTerjualManual !== undefined;
+            const totalCupPenjualan = isManualCup ? appState.cupTerjualManual : totalCupAuto;
+
+            const totalCupTerpakai = totalCupPenjualan + totalCupGratis;
+            const cupAwal = appState.cupAwal || 0;
+            const sisaCup = cupAwal - totalCupTerpakai;
+
+            const totalPenjualan = totalCash + totalQR;
+            const cashSeharusnya = appState.modalAwal + totalCash;
+            const selisihCash = appState.cashAktual - cashSeharusnya;
+
+            // UI Indicators for Cup Terjual Field
+            const labelMode = document.getElementById('labelModeCupTerjual');
+            const btnResetAuto = document.getElementById('btnResetCupAuto');
+            const inputCupTerjual = document.getElementById('inputCupTerjual');
+
+            if (isManualCup) {
+                if (labelMode) labelMode.textContent = 'Mode: Input Manual';
+                if (btnResetAuto) btnResetAuto.classList.remove('hidden');
+            } else {
+                if (labelMode) labelMode.textContent = 'Auto dari transaksi';
+                if (btnResetAuto) btnResetAuto.classList.add('hidden');
+                if (inputCupTerjual && document.activeElement !== inputCupTerjual) {
+                    inputCupTerjual.value = totalCupAuto > 0 ? totalCupAuto : '';
+                }
+            }
+
+            // 2. Update Dashboard UI Cards Safely
+            setElementText('dashModalAwal', formatRupiah(appState.modalAwal));
+            setElementText('dashTotalCup', `${formatNumber(totalCupTerpakai)} CUP`);
+            setElementText('dashCupAwal', `${formatNumber(cupAwal)} CUP`);
+            setElementText('dashCupGratis', `${formatNumber(totalCupGratis)} CUP`);
+            setElementText('dashSisaCup', `${formatNumber(sisaCup)} CUP`);
+            setElementText('dashTotalCash', formatRupiah(totalCash));
+            setElementText('dashTotalQR', formatRupiah(totalQR));
+            setElementText('dashTotalPenjualan', formatRupiah(totalPenjualan));
+
+            // 3. Update Sales Table
+            const tbody = document.getElementById('tabelProdukBody');
+            const emptyState = document.getElementById('emptyState');
+            if (tbody) tbody.innerHTML = '';
+
+            setElementText('badgeTotalItem', `${appState.produkList.length} Jenis Produk`);
+
+            if (appState.produkList.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+            } else {
+                if (emptyState) emptyState.classList.add('hidden');
+
+                appState.produkList.forEach((item, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/80 transition text-xs sm:text-sm font-medium";
+
+                    const badgeMetode = item.metode === 'CASH' 
+                        ? `<span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-bold">CASH</span>`
+                        : `<span class="bg-sky-100 text-sky-800 text-[11px] px-2 py-0.5 rounded-full font-bold">QR</span>`;
+
+                    tr.innerHTML = `
+                        <td class="py-3 px-3.5 text-center text-slate-400 font-bold">${idx + 1}</td>
+                        <td class="py-3 px-3.5 font-bold text-slate-800">${escapeHtml(item.nama)}</td>
+                        <td class="py-3 px-3.5 text-right text-slate-600">${formatRupiah(item.harga)}</td>
+                        <td class="py-3 px-3.5 text-center font-bold text-slate-800">${item.cup}</td>
+                        <td class="py-3 px-3.5 text-center">${badgeMetode}</td>
+                        <td class="py-3 px-3.5 text-right font-extrabold text-slate-900">${formatRupiah(item.total)}</td>
+                        <td class="py-3 px-3.5 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <button onclick="openEditModal(${idx})" class="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-indigo-600 rounded-lg transition" title="Edit">
+                                    <i class="fa-solid fa-pen text-xs"></i>
+                                </button>
+                                <button onclick="hapusProduk(${idx})" class="p-1.5 bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 rounded-lg transition" title="Hapus">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    if (tbody) tbody.appendChild(tr);
+                });
+            }
+
+            // 4. Update Tabel Gratis / Non-Bayar
+            const tGratisBody = document.getElementById('tabelGratisBody');
+            const emptyGratisState = document.getElementById('emptyGratisState');
+            if (tGratisBody) tGratisBody.innerHTML = '';
+
+            const listGratis = appState.gratisList || [];
+            setElementText('badgeTotalGratis', `${totalCupGratis} Cup`);
+
+            if (listGratis.length === 0) {
+                if (emptyGratisState) emptyGratisState.classList.remove('hidden');
+            } else {
+                if (emptyGratisState) emptyGratisState.classList.add('hidden');
+                listGratis.forEach((g, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-amber-50/50 transition text-xs";
+                    tr.innerHTML = `
+                        <td class="py-2 px-3.5 text-center text-slate-400 font-bold">${idx + 1}</td>
+                        <td class="py-2 px-3.5 font-semibold text-slate-800">${escapeHtml(g.keterangan)}</td>
+                        <td class="py-2 px-3.5 text-center font-bold text-amber-700">${g.cup} Cup</td>
+                        <td class="py-2 px-3.5 text-center">
+                            <button onclick="hapusGratis(${idx})" class="p-1 bg-slate-100 hover:bg-rose-100 text-slate-500 hover:text-rose-600 rounded transition" title="Hapus">
+                                <i class="fa-solid fa-trash text-[11px]"></i>
+                            </button>
+                        </td>
+                    `;
+                    if (tGratisBody) tGratisBody.appendChild(tr);
+                });
+            }
+
+            // 5. Update Cash Closing Section
+            setElementText('calcCashSeharusnya', formatRupiah(cashSeharusnya));
+            setElementText('labelModalCalc', formatNumber(appState.modalAwal));
+            setElementText('labelCashCalc', formatNumber(totalCash));
+
+            const selisihEl = document.getElementById('calcSelisih');
+            const statusBadge = document.getElementById('badgeStatusClosing');
+            const statusCard = document.getElementById('cardStatusSelisih');
+
+            if (!selisihEl || !statusBadge || !statusCard) return;
+
+            if (appState.cashAktual === 0 && appState.produkList.length === 0 && appState.modalAwal === 0) {
+                selisihEl.textContent = 'Rp0';
+                selisihEl.className = 'text-2xl font-extrabold text-slate-800 tracking-tight';
+                statusBadge.className = 'inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg w-max bg-slate-200 text-slate-700';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-info"></i> <span>BELUM CLOSING</span>`;
+                statusCard.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1 flex flex-col justify-center';
+            } else if (selisihCash === 0) {
+                selisihEl.textContent = 'Rp0';
+                selisihEl.className = 'text-2xl font-extrabold text-emerald-600 tracking-tight';
+                statusBadge.className = 'inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg w-max bg-emerald-100 text-emerald-800';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>CLOSING SESUAI</span>`;
+                statusCard.className = 'bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-1 flex flex-col justify-center';
+            } else if (selisihCash < 0) {
+                const kurangAbs = Math.abs(selisihCash);
+                selisihEl.textContent = `-Rp${formatNumber(kurangAbs)}`;
+                selisihEl.className = 'text-2xl font-extrabold text-rose-600 tracking-tight';
+                statusBadge.className = 'inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg w-max bg-rose-100 text-rose-800';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> <span>CASH KURANG ${formatRupiah(kurangAbs)}</span>`;
+                statusCard.className = 'bg-rose-50/50 p-4 rounded-xl border border-rose-200 space-y-1 flex flex-col justify-center';
+            } else {
+                selisihEl.textContent = `+Rp${formatNumber(selisihCash)}`;
+                selisihEl.className = 'text-2xl font-extrabold text-sky-600 tracking-tight';
+                statusBadge.className = 'inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg w-max bg-sky-100 text-sky-800';
+                statusBadge.innerHTML = `<i class="fa-solid fa-circle-plus"></i> <span>CASH LEBIH ${formatRupiah(selisihCash)}</span>`;
+                statusCard.className = 'bg-sky-50/50 p-4 rounded-xl border border-sky-200 space-y-1 flex flex-col justify-center';
+            }
+        }
+
+        // CLOSING SUMMARY POPUP
+        function prosesTutupClosing() {
+            let totalCupAuto = 0;
+            let totalCash = 0;
+            let totalQR = 0;
+
+            appState.produkList.forEach(item => {
+                totalCupAuto += (item.cup || 0);
+                if (item.metode === 'CASH') totalCash += item.total;
+                if (item.metode === 'QR') totalQR += item.total;
+            });
+
+            let totalCupGratis = 0;
+            (appState.gratisList || []).forEach(g => {
+                totalCupGratis += (g.cup || 0);
+            });
+
+            const totalCupPenjualan = (appState.cupTerjualManual !== null && appState.cupTerjualManual !== undefined) 
+                ? appState.cupTerjualManual 
+                : totalCupAuto;
+
+            const totalCupTerpakai = totalCupPenjualan + totalCupGratis;
+            const cupAwal = appState.cupAwal || 0;
+            const sisaCup = cupAwal - totalCupTerpakai;
+
+            const totalPenjualan = totalCash + totalQR;
+            const cashSeharusnya = appState.modalAwal + totalCash;
+            const selisihCash = appState.cashAktual - cashSeharusnya;
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            setElementText('ringkasanTanggal', `Tanggal: ${dateStr}`);
+            setElementText('rModalAwal', formatRupiah(appState.modalAwal));
+            setElementText('rCupAwal', `${formatNumber(cupAwal)} CUP`);
+            setElementText('rTotalCup', `${formatNumber(totalCupPenjualan)} CUP`);
+            setElementText('rCupGratis', `${formatNumber(totalCupGratis)} CUP`);
+            setElementText('rSisaCup', `${formatNumber(sisaCup)} CUP`);
+            setElementText('rCash', formatRupiah(totalCash));
+            setElementText('rQR', formatRupiah(totalQR));
+            setElementText('rTotalPenjualan', formatRupiah(totalPenjualan));
+            setElementText('rCashSeharusnya', formatRupiah(cashSeharusnya));
+            setElementText('rCashAktual', formatRupiah(appState.cashAktual));
+
+            // Rincian List Gratis di modal closing
+            const rSectionGratisList = document.getElementById('rSectionGratisList');
+            const rGratisListText = document.getElementById('rGratisListText');
+            if (rSectionGratisList && rGratisListText) {
+                if (appState.gratisList && appState.gratisList.length > 0) {
+                    rGratisListText.innerHTML = '';
+                    appState.gratisList.forEach(g => {
+                        const li = document.createElement('li');
+                        li.textContent = `${g.keterangan} (${g.cup} Cup)`;
+                        rGratisListText.appendChild(li);
+                    });
+                    rSectionGratisList.classList.remove('hidden');
+                } else {
+                    rSectionGratisList.classList.add('hidden');
+                }
+            }
+
+            const rSelisih = document.getElementById('rSelisih');
+            const rStatus = document.getElementById('rStatus');
+
+            if (rSelisih && rStatus) {
+                if (selisihCash === 0) {
+                    rSelisih.textContent = 'Rp0';
+                    rSelisih.className = 'font-bold text-emerald-600';
+                    rStatus.textContent = 'CLOSING SESUAI';
+                    rStatus.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800';
+                } else if (selisihCash < 0) {
+                    const kurang = Math.abs(selisihCash);
+                    rSelisih.textContent = `-Rp${formatNumber(kurang)}`;
+                    rSelisih.className = 'font-bold text-rose-600';
+                    rStatus.textContent = `CASH KURANG ${formatRupiah(kurang)}`;
+                    rStatus.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800';
+                } else {
+                    rSelisih.textContent = `+Rp${formatNumber(selisihCash)}`;
+                    rSelisih.className = 'font-bold text-sky-600';
+                    rStatus.textContent = `CASH LEBIH ${formatRupiah(selisihCash)}`;
+                    rStatus.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800';
+                }
+            }
+
+            document.getElementById('modalClosing')?.classList.remove('hidden');
+        }
+
+        function closeClosingModal() {
+            document.getElementById('modalClosing')?.classList.add('hidden');
+        }
+
+        // RESET LOGIC
+        function openResetModal() {
+            document.getElementById('modalReset')?.classList.remove('hidden');
+        }
+
+        function closeResetModal() {
+            document.getElementById('modalReset')?.classList.add('hidden');
+        }
+
+        function executeResetClosing() {
+            appState = {
+                modalAwal: 500000,
+                cupAwal: 80,
+                cupTerjualManual: null,
+                cashAktual: 0,
+                produkList: [],
+                gratisList: []
+            };
+            saveToStorage();
+            
+            const elModal = document.getElementById('inputModalAwal');
+            const elCup = document.getElementById('inputCupAwal');
+            const elCupTerjual = document.getElementById('inputCupTerjual');
+            const elCash = document.getElementById('inputCashAktual');
+
+            if (elModal) elModal.value = '500.000';
+            if (elCup) elCup.value = '80';
+            if (elCupTerjual) elCupTerjual.value = '';
+            if (elCash) elCash.value = '';
+
+            closeResetModal();
+            render();
+        }
+
+        // CETAK / PRINT LOGIC
+        function triggerCetakClosing() {
+            let totalCupAuto = 0;
+            let totalCash = 0;
+            let totalQR = 0;
+
+            appState.produkList.forEach(item => {
+                totalCupAuto += (item.cup || 0);
+                if (item.metode === 'CASH') totalCash += item.total;
+                if (item.metode === 'QR') totalQR += item.total;
+            });
+
+            let totalCupGratis = 0;
+            (appState.gratisList || []).forEach(g => {
+                totalCupGratis += (g.cup || 0);
+            });
+
+            const totalCupPenjualan = (appState.cupTerjualManual !== null && appState.cupTerjualManual !== undefined) 
+                ? appState.cupTerjualManual 
+                : totalCupAuto;
+
+            const totalCupTerpakai = totalCupPenjualan + totalCupGratis;
+            const cupAwal = appState.cupAwal || 0;
+            const sisaCup = cupAwal - totalCupTerpakai;
+
+            const totalPenjualan = totalCash + totalQR;
+            const cashSeharusnya = appState.modalAwal + totalCash;
+            const selisihCash = appState.cashAktual - cashSeharusnya;
+
+            const now = new Date();
+            setElementText('printTanggal', `Tanggal: ${now.toLocaleDateString('id-ID')}`);
+            setElementText('printJam', `Jam: ${now.toLocaleTimeString('id-ID')}`);
+
+            setElementText('pModalAwal', formatRupiah(appState.modalAwal));
+            setElementText('pCupAwal', `${formatNumber(cupAwal)} CUP`);
+            setElementText('pTotalCup', `${formatNumber(totalCupPenjualan)} CUP`);
+            setElementText('pCupGratis', `${formatNumber(totalCupGratis)} CUP`);
+            setElementText('pSisaCup', `${formatNumber(sisaCup)} CUP`);
+            setElementText('pCash', formatRupiah(totalCash));
+            setElementText('pQR', formatRupiah(totalQR));
+            setElementText('pTotalPenjualan', formatRupiah(totalPenjualan));
+
+            setElementText('pCashSeharusnya', formatRupiah(cashSeharusnya));
+            setElementText('pCashAktual', formatRupiah(appState.cashAktual));
+
+            if (selisihCash === 0) {
+                setElementText('pSelisih', 'Rp0');
+                setElementText('pStatus', 'CLOSING SESUAI');
+            } else if (selisihCash < 0) {
+                setElementText('pSelisih', `-Rp${formatNumber(Math.abs(selisihCash))}`);
+                setElementText('pStatus', `CASH KURANG ${formatRupiah(Math.abs(selisihCash))}`);
+            } else {
+                setElementText('pSelisih', `+Rp${formatNumber(selisihCash)}`);
+                setElementText('pStatus', `CASH LEBIH ${formatRupiah(selisihCash)}`);
+            }
+
+            // Print table rows
+            const pTbody = document.getElementById('printTabelBody');
+            if (pTbody) {
+                pTbody.innerHTML = '';
+                appState.produkList.forEach(item => {
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px dashed #eee';
+                    tr.innerHTML = `
+                        <td style="padding: 2px 0;">${escapeHtml(item.nama)}</td>
+                        <td style="padding: 2px 0; text-align: right;">${formatNumber(item.harga)}</td>
+                        <td style="padding: 2px 0; text-align: center;">${item.cup}</td>
+                        <td style="padding: 2px 0; text-align: center;">${item.metode}</td>
+                        <td style="padding: 2px 0; text-align: right;">${formatNumber(item.total)}</td>
+                    `;
+                    pTbody.appendChild(tr);
+                });
+            }
+
+            // Print Gratis rows
+            const pSectionGratis = document.getElementById('pSectionGratis');
+            const printGratisBody = document.getElementById('printGratisBody');
+            if (pSectionGratis && printGratisBody) {
+                if (appState.gratisList && appState.gratisList.length > 0) {
+                    printGratisBody.innerHTML = '';
+                    appState.gratisList.forEach(g => {
+                        const li = document.createElement('li');
+                        li.textContent = `${escapeHtml(g.keterangan)} (${g.cup} Cup)`;
+                        printGratisBody.appendChild(li);
+                    });
+                    pSectionGratis.style.display = 'block';
+                } else {
+                    pSectionGratis.style.display = 'none';
+                }
+            }
+
+            // Show print area temporarily and call window.print
+            const printArea = document.getElementById('printArea');
+            if (printArea) {
+                printArea.classList.remove('hidden');
+                window.print();
+                printArea.classList.add('hidden');
+            }
+        }
+
+        // UTILITY: ESCAPE HTML
+        function escapeHtml(str) {
+            return (str || '').replace(/[&<>"']/g, function(m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+    </script>
+</body>
+</html>
